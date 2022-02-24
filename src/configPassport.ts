@@ -53,7 +53,7 @@ module.exports = function (passport: any) {
       {
         clientID:"1069896030384-paig8omi56fek5q0s56e2ejheumamqof.apps.googleusercontent.com",
         clientSecret:"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",
-        callbackURL: "http://localhost:3001/api/auth/google/callback",
+        callbackURL: `${process.env.SERVER_URL}/api/auth/google/callback`,
       },
       async function (
         accessToken: any,

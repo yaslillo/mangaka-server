@@ -15,7 +15,7 @@ authRouter.get("/google",
 );
 
 authRouter.get("/google/callback",
-  passport.authenticate("google", { successRedirect: "http://localhost:3000", failureRedirect: "/login" })
+  passport.authenticate("google", { successRedirect: `${process.env.CLIENT_URL}`, failureRedirect: "/login" })
 );
 
 authRouter.get("/google/response", async (req: any, res: any) => {  
@@ -34,7 +34,7 @@ authRouter.get("/google/response", async (req: any, res: any) => {
 authRouter.post<{}, {}>("/local/login", (req, res, next) => {
   passport.authenticate(
     "local",
-    { successRedirect: "http://localhost:3000/", failureRedirect: "/login" },
+    { successRedirect: `${process.env.CLIENT_URL}/`, failureRedirect: "/login" },
     (err, user, info) => {
       if (err) throw err;
       if (!user) return res.status(404).send("No user exists");
@@ -42,8 +42,6 @@ authRouter.post<{}, {}>("/local/login", (req, res, next) => {
         req.logIn(user, (err) => {
           if (err) throw err;
           return res.send(user) 
-          //res.send("successfully authenticated");
-          //res.redirect("http://localhost:3000/")
         });
       }
     }

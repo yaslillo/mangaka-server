@@ -26,9 +26,9 @@ externalOrderRouter.post<{}, {}>("/buy", (req, res) => {
     installments: 1,
 
     back_urls: {
-      success: `http://localhost:3001/api/coins/pagos/${product.idaux}`,
-      failure: "http://localhost:3001/api/coins/buy",
-      pending: "http://localhost:3001/api/coins/buy",
+      success: `${process.env.SERVER_URL}/api/coins/pagos/${product.idaux}`,
+      failure: `${process.env.SERVER_URL}/api/coins/buy`,
+      pending: `${process.env.SERVER_URL}/api/coins/buy`,
     },
     auto_return: "approved",
 
@@ -86,10 +86,10 @@ externalOrderRouter.get("/pagos/:product", async (req, res) => {
         });
         //@ts-ignore
 
-        res.redirect("http://localhost:3000");
+        res.redirect(`${process.env.CLIENT_URL}`);
       } catch (error) {
         console.log(error);
-        res.redirect("http://localhost:3000/error");
+        res.redirect(`${process.env.CLIENT_URL}/error`);
       }
     }
   }

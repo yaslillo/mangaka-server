@@ -58,7 +58,6 @@ internalOrderRouter.post<{}, {}>(
           });
 
           res.send("exito");
-          // res.redirect("http://localhost:3000");
         } else {
           const updatebuyer = await db.user.update({
             where: {
@@ -70,7 +69,6 @@ internalOrderRouter.post<{}, {}>(
             },
           });
           res.send("exito");
-          // res.redirect("http://localhost:3000");
         }
       }
     }
