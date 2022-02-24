@@ -65,6 +65,6 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
   res.status(status).send({ message });
 });
 
-app.listen(3001, () => {
-  console.log("Server listening on port 3001");
+app.listen(process.env.PORT || 3001, () => {
+  console.log(`Server listening on port ${process.env.PORT || 3001}`);
 });
