@@ -1,5 +1,3 @@
-import Manga from "./Manga";
-
 export default class Chapter {
   id: number | undefined;
   title: string;

@@ -9,7 +9,7 @@ export const internalOrderRouter = Router();
 internalOrderRouter.post<{}, {}>(
   "/buyChapter",
   isAuthenticated,
-  async (req, res, next) => {
+  async (req: any, res, next) => {
     const { sellerId, productId } = req.body;
     let buyeruser = req.user;
     let productid = Number(productId);
@@ -75,7 +75,7 @@ internalOrderRouter.post<{}, {}>(
   }
 );
 
-internalOrderRouter.post<{}, {}>("/wishlistManga", async (req, res, next) => {
+internalOrderRouter.post<{}, {}>("/wishlistManga", async (req: any, res, next) => {
   let { mangaId } = req.body;
   let user2 = req.user;
   console.log(mangaId);
@@ -96,7 +96,7 @@ internalOrderRouter.post<{}, {}>("/wishlistManga", async (req, res, next) => {
   }
 });
 
-internalOrderRouter.post<{}, {}>("/favoritesManga", async (req, res, next) => {
+internalOrderRouter.post<{}, {}>("/favoritesManga", async (req: any, res, next) => {
   let { mangaId } = req.body;
   let user2 = req.user;
   let firstUser = await db.user.findUnique({
@@ -116,13 +116,13 @@ internalOrderRouter.post<{}, {}>("/favoritesManga", async (req, res, next) => {
     res.send("You already have this manga in Favorites");
   }
 });
-internalOrderRouter.get<{}, {}>("/getBuyerOrder", async (req, res) => {
-  let user2 = req.user; //@ts-ignore
+internalOrderRouter.get<{}, {}>("/getBuyerOrder", async (req: any, res) => {
+  let user2 = req.user;
   let info = await db.internalOrder.findMany({ where: { buyerId: user2.id } });
   res.send(info);
 });
-internalOrderRouter.get<{}, {}>("/getSellerOrder", async (req, res) => {
-  let user2 = req.user; //@ts-ignore
+internalOrderRouter.get<{}, {}>("/getSellerOrder", async (req: any, res) => {
+  let user2 = req.user;
   let info = await db.internalOrder.findMany({ where: { sellerId: user2.id } });
   res.send(info);
 });
