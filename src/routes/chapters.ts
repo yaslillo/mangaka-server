@@ -3,7 +3,8 @@ import { db } from "../app";
 import Chapter from "../classes/Chapter";
 import { isAuthenticated } from "./auth";
 import multer from "multer";
-const upload = multer({
+
+const upload: multer.Multer = multer({
   limits: {
     fileSize: 100000000,
   },
@@ -15,7 +16,7 @@ const upload = multer({
   },
 });
 
-export const chaptersRouter = Router();
+export const chaptersRouter: Router = Router();
 
 // Creacion de un chapter
 chaptersRouter.post<{}, {}>(
@@ -27,12 +28,7 @@ chaptersRouter.post<{}, {}>(
   ]),
   async (req, res, next) => {
     const { title, mangaId, price } = req.body;
-    //@ts-ignore
-    // const Authorship = req.user.created.find((c) => c.id === Number(mangaId));
-    // if (!Authorship) {
-    //   return res.status(400).send({ msg: "You not have permission to create a chapter in this manga" });
-    // }
-    //@ts-ignore
+
     let images: Buffer[] = [];
     let cover: Buffer;
     if (req.files) {

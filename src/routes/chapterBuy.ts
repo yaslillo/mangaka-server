@@ -1,10 +1,9 @@
 import { Router } from "express";
 import { db } from "../app";
-import Chapter from "../classes/Chapter";
-import User from "../classes/User";
 import internalOrder from "../classes/InternalOrder";
 import { isAuthenticated } from "./auth";
 export const internalOrderRouter = Router();
+
 
 internalOrderRouter.post<{}, {}>(
   "/buyChapter",
@@ -58,6 +57,7 @@ internalOrderRouter.post<{}, {}>(
           });
 
           res.send("exito");
+          // res.redirect("http://localhost:3000");
         } else {
           const updatebuyer = await db.user.update({
             where: {
@@ -69,6 +69,7 @@ internalOrderRouter.post<{}, {}>(
             },
           });
           res.send("exito");
+          // res.redirect("http://localhost:3000");
         }
       }
     }

@@ -33,6 +33,18 @@ usersRouter.get("/", async (req, res) => {
 
   res.send(users);
 });
+
+usersRouter.get("/profile", async (req, res) => {
+  const user = req;
+  const users = db.user.findUnique({
+    where: {
+      id: ''
+    },
+  });
+
+  res.send(users);
+});
+
 // Creacion de un user
 usersRouter.post<
   {},
