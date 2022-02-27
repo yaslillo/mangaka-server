@@ -9,11 +9,11 @@ const router = Router();
 export async function isAuthenticated(req: any , res: any, next: any) {
   const token = req.token;
 
-  if (!token) return res.sendStatus(401)
+  if (!token) return res.status(401).send();
 
   jwt.verify(token, JWT_TOKEN_SECRET as string, async (err: any, decoded: any) => {
+    if (err) return res.status().send(403);
     const user = await db.user.findUnique({where: { id: decoded.id }});
-    if (err) return res.sendStatus(403);
     req.user = user
     next();
   })

@@ -16,10 +16,10 @@ const upload: multer.Multer = multer({
   },
 });
 
-export const chaptersRouter: Router = Router();
+const router: Router = Router();
 
 // Creacion de un chapter
-chaptersRouter.post<{}, {}>(
+router.post<{}, {}>(
   "/",
   // isAuthenticated,
   upload.fields([
@@ -63,7 +63,7 @@ chaptersRouter.post<{}, {}>(
 );
 
 //Actualizar las imagenes de un chapter
-chaptersRouter.put(
+router.put(
   "/chapter/updateImages",
   isAuthenticated,
   upload.array("chapters", 100),
@@ -101,7 +101,7 @@ chaptersRouter.put(
 );
 
 //Actualizacion de la portada de un chapter
-chaptersRouter.put(
+router.put(
   "/chapter/updateCover",
   isAuthenticated,
   upload.single("cover"),
@@ -133,7 +133,7 @@ chaptersRouter.put(
 );
 
 //Ruta que intercambia las posiciones de 2 imagenes de un chapter
-chaptersRouter.put("/chapter/swapImages", isAuthenticated, async (req, res, next) => {
+router.put("/chapter/swapImages", isAuthenticated, async (req, res, next) => {
   const { chapterId, mangaId } = req.body;
   //@ts-ignore
   const Authorship = req.user.created.find((c) => c.id === Number(mangaId));
@@ -165,7 +165,7 @@ chaptersRouter.put("/chapter/swapImages", isAuthenticated, async (req, res, next
 });
 
 //Traermos un capitulo particular
-chaptersRouter.get<{ idChapter: string }, {}>(
+router.get<{ idChapter: string }, {}>(
   "/chapter/getchapter/:idChapter",
   async (req, res, next) => {
     const { idChapter } = req.params;
@@ -180,7 +180,7 @@ chaptersRouter.get<{ idChapter: string }, {}>(
 );
 
 //Ruta para traerse todas las paginas del chapter
-chaptersRouter.get(
+router.get(
   "/chapter/images/:idChapter",
   async (req, res, next) => {
     const { idChapter } = req.params;
@@ -191,7 +191,7 @@ chaptersRouter.get(
   });
 
 //Ruta para ver la imagen de la portada
-chaptersRouter.get("/chapter/cover/:idChapter", async (req, res, next) => {
+router.get("/chapter/cover/:idChapter", async (req, res, next) => {
   const { idChapter } = req.params;
   const Chapter: any = await db.chapter.findUnique({
     where: { id: Number(idChapter) },
@@ -200,7 +200,7 @@ chaptersRouter.get("/chapter/cover/:idChapter", async (req, res, next) => {
 });
 
 
-// chaptersRouter.post<{}, {}>("/testChapters", async (req, res, next) => {
+// router.post<{}, {}>("/testChapters", async (req, res, next) => {
 //   const { title, images, mangaId } = req.body;
 //   try {
 //   const popularMangas = await db.manga.findMany({})
@@ -221,7 +221,7 @@ chaptersRouter.get("/chapter/cover/:idChapter", async (req, res, next) => {
 // });
 
 // Votación de un capitulo
-chaptersRouter.put("/chapter/vote/:idChapter", isAuthenticated, async (req: any, res) => {
+router.put("/chapter/vote/:idChapter", isAuthenticated, async (req: any, res) => {
   const { idChapter } = req.params;
   let { points } = req.body;
   const user = req.user;
@@ -264,7 +264,7 @@ chaptersRouter.put("/chapter/vote/:idChapter", isAuthenticated, async (req: any,
 });
 
 // Obtener puntaje de un capitulo
-chaptersRouter.get<{ idChapter: string }, {}>('/chapter/rating/:idChapter', async (req, res) => {
+router.get<{ idChapter: string }, {}>('/chapter/rating/:idChapter', async (req, res) => {
   let { idChapter } = req.params;
 
   try {
@@ -289,3 +289,5 @@ chaptersRouter.get<{ idChapter: string }, {}>('/chapter/rating/:idChapter', asyn
     res.status(400).send({ error: err.message })
   }
 });
+
+export default router;

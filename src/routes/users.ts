@@ -18,14 +18,14 @@ const upload = multer({
 });
 import axios from "axios";
 import { deleteToTheList, addToTheList } from "../utils/lists";
-export const usersRouter = Router();
+const router = Router();
 
-usersRouter.get("/", async (req, res) => {
+router.get("/", async (req, res) => {
     const users = await db.user.findMany({});
     return res.status(200).send(users);
 });
 
-usersRouter.post("/", upload.single("avatar"), async (req, res) => {
+router.post("/", upload.single("avatar"), async (req, res) => {
   const { name, username, password, email } = req.body;
 
   const regPass = new RegExp(/^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-._]).{8,15}$/);
@@ -62,7 +62,23 @@ usersRouter.post("/", upload.single("avatar"), async (req, res) => {
   }
 });
 
-usersRouter.get("/:id", async (req, res, next) => {
+
+router.get("/current", isAuthenticated, async (req: any, res, next) => {
+  console.log('aca')
+  const { id } = req.user;
+  try {
+    var user: any = await db.user.findUnique({
+      where: { id: "4f641d8b-6f76-4077-adfd-5cffd7dee608" },
+    });
+  } catch (err: any) {
+    console.log('alskdjfaldskj')
+    return res.status(400).send({ error: err.message });
+  }
+
+  return res.status(200).send(user)
+});
+
+router.get("/:id", async (req, res, next) => {
   const { id } = req.params;
   try {
     const user: any = await db.user.findUnique({
@@ -108,20 +124,8 @@ usersRouter.get("/:id", async (req, res, next) => {
   }
 });
 
-usersRouter.get("/current", isAuthenticated, async (req: any, res, next) => {
-  const { id } = req.user;
-  try {
-    var user: any = await db.user.findUnique({
-      where: { id: id },
-    });
-  } catch (err: any) {
-    return res.status(400).send({ error: err.message });
-  }
 
-  return res.status(200).send(user)
-});
-
-usersRouter.post("/super-admin", async (req, res) => {
+router.post("/super-admin", async (req, res) => {
   let image = await axios.get(
     "https://http2.mlstatic.com/D_NQ_NP_781075-MLA48271965969_112021-O.webp",
     { responseType: "arraybuffer" }
@@ -152,7 +156,7 @@ usersRouter.post("/super-admin", async (req, res) => {
   }
 });
 
-usersRouter.put(
+router.put(
   "/set-admin/:username",
   isAuthenticated,
   async (req: any, res, next) => {
@@ -185,7 +189,7 @@ usersRouter.put(
   }
 );
 
-usersRouter.put(
+router.put(
   "/set-active/:username",
   isAuthenticated,
   async (req: any, res, next) => {
@@ -220,7 +224,7 @@ usersRouter.put(
     }
   });
 
-usersRouter.put("/lists", isAuthenticated, async (req: any, res) => {
+router.put("/lists", isAuthenticated, async (req: any, res) => {
   const id = req.user.id
   const { list } = req.query;
   const mangaId = Number(req.body.mangaId);
@@ -241,7 +245,7 @@ usersRouter.put("/lists", isAuthenticated, async (req: any, res) => {
   }
 });
 
-usersRouter.get("/popular-authors", async (req, res) => {
+router.get("/popular-authors", async (req, res) => {
   try {
     let authorsDB = await db.user.findMany({
       where: {
@@ -275,3 +279,5 @@ usersRouter.get("/popular-authors", async (req, res) => {
     return res.status(400).send({ error: error.message })
   }
 });
+
+export default router;
