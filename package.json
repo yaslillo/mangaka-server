@@ -25,6 +25,7 @@
     "cors": "^2.8.5",
     "dotenv": "^15.0.1",
     "express": "^4.17.2",
+    "express-bearer-token": "^2.4.0",
     "express-session": "^1.17.2",
     "heroku": "^7.59.2",
     "jsonwebtoken": "^8.5.1",
