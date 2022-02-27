@@ -49,7 +49,7 @@ externalOrderRouter.post<{}, {}>("/buy", (req, res) => {
     });
 });
 
-externalOrderRouter.get("/pagos/:product", async (req, res) => {
+externalOrderRouter.get("/pagos/:product", async (req: any, res) => {
   const payment_status = req.query.status;
   let { product } = req.params;
   let user2 = req.user;
@@ -98,8 +98,7 @@ externalOrderRouter.get("/pagos/:product", async (req, res) => {
   }
 });
 
-externalOrderRouter.post<{}, {}>("/sell", async (req, res) => {
-  console.log('sell')
+externalOrderRouter.post<{}, {}>("/sell", async (req: any, res) => {
   let { name, cbu, value } = req.body;
   let user2 = req.user;
   let nValue = Number(value);
@@ -192,14 +191,14 @@ externalOrderRouter.get<{}, {}>("/pack", async (req, res) => {
   res.send(packfiltered);
 });
 
-externalOrderRouter.get<{}, {}>("/getBuyOrders", async (req, res) => {
-  let user2 = req.user; //@ts-ignore
+externalOrderRouter.get<{}, {}>("/getBuyOrders", async (req: any, res) => {
+  let user2 = req.user;
   let info = await db.externalOrder.findMany({ where: { userId: user2.id } });
   res.send(info);
 });
 
-externalOrderRouter.get<{}, {}>("/getSellOrders", async (req, res) => {
-  let user2 = req.user; //@ts-ignore
+externalOrderRouter.get<{}, {}>("/getSellOrders", async (req: any, res) => {
+  let user2 = req.user;
   let info = await db.extractionOrder.findMany({ where: { userId: user2.id } });
   res.send(info);
 });

@@ -2,9 +2,8 @@ import { Router } from "express";
 import bcrypt from "bcrypt";
 import { db } from "../app";
 import User from "../classes/User";
-import fs from "fs";
+import fsPromise from "fs/promises";
 import multer from "multer";
-import { Role } from '@prisma/client';
 import { isAuthenticated } from "./auth";
 const upload = multer({
   limits: {
@@ -22,196 +21,48 @@ import { deleteToTheList, addToTheList } from "../utils/lists";
 export const usersRouter = Router();
 
 usersRouter.get("/", async (req, res) => {
-  const users = await db.user.findMany({
-    /*
-    where: { created: { some: {} } },
-    include: {
-      created: true,
-    },
-    */
-  });
-
-  res.send(users);
+    const users = await db.user.findMany({});
+    return res.status(200).send(users);
 });
 
-usersRouter.get("/profile", async (req, res) => {
-  const user = req;
-  const users = db.user.findUnique({
-    where: {
-      id: ''
-    },
-  });
-
-  res.send(users);
-});
-
-// Creacion de un user
-usersRouter.post<
-  {},
-  {},
-  { name: string; username: string; password: string; email: string }
->("/register", upload.single("avatar"), async (req, res) => {
+usersRouter.post("/", upload.single("avatar"), async (req, res) => {
   const { name, username, password, email } = req.body;
 
-  const regPass = new RegExp(
-    /^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-._]).{8,15}$/
-  );
-  const regEmail = new RegExp(
-    /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
-  );
+  const regPass = new RegExp(/^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-._]).{8,15}$/);
+  const regEmail = new RegExp(/^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/);
 
-  if (!regPass.test(password))
-    return res.status(400).json({ error: "Invalid password" });
+  if (!regPass.test(password)) return res.status(400).json({ error: "contraseña no valida" });
+  if (!regEmail.test(email)) return res.status(400).json({ error: "email no valido" });
 
-  if (!regEmail.test(email))
-    return res.status(400).json({ error: "Invalid email address" });
-
-  let hashedPassword = await bcrypt.hash(password, 10);
-  let avatar: Buffer;
-
-  if (req.file) {
-    avatar = req.file.buffer;
-  } else {
-    avatar = fs.readFileSync("./assets/default.png");
-  }
-
-  const newUser = new User(name, username, avatar, email, hashedPassword);
+  const hashedPassword = await bcrypt.hash(password, 10);
+  const avatar: Buffer = req.file ? req.file.buffer : await fsPromise.readFile("./assets/default.png");
+  const user = new User(name, username, avatar, email, hashedPassword);
 
   try {
-    const user = await db.user.findFirst({
+    const existingUser = await db.user.findFirst({
       where: {
         OR: [{ username: username }, { email: email }],
       },
     });
 
-    if (user) {
-      if (user.username === username) {
-        return res.status(400).json({ error: "This username already exist" });
-      } else {
-        return res.status(400).json({ error: "This email already exist" });
-      }
+    if (!existingUser) {
+      await db.user.create({
+        data: user,
+      });
+  
+      return res.status(201).json({ msg: "user created successfully" });
     }
 
-    await db.user.create({
-      //@ts-ignore
-      data: newUser,
-    });
-
-    return res.status(201).json({ msg: "Successefully user created" });
+    const error = [];
+    if (existingUser.username === username) error.push('username already exist');
+    if (existingUser.email === email) error.push('email already exist')
+    return res.status(400).json({ error: error.join(", ") });
   } catch (error) {
-    console.log(error);
-    res.status(400).send({ error: "An error creating a user" });
+    return res.status(400).json({ error: "there was an error creating the user" });
   }
 });
 
-// testing autores
-usersRouter.post<{}, {}>("/authorsTest", async (req, res) => {
-  let image = await axios.get(
-    "https://http2.mlstatic.com/D_NQ_NP_781075-MLA48271965969_112021-O.webp",
-    { responseType: "arraybuffer" }
-  );
-  let buffer = Buffer.from(image.data, "utf-8");
-  let hashedPassword = await bcrypt.hash("Testuser152022!", 10);
-  const userTest2 = new User(
-    "Aster Noriko",
-    "AsterN",
-    buffer,
-    "asternoriko@gmail.com",
-    hashedPassword
-  );
-  const userTest3 = new User(
-    "Daichi Matsuse",
-    "DaichiM",
-    buffer,
-    "daichimatsuse@gmail.com",
-    hashedPassword
-  );
-  const userTest4 = new User(
-    "Fumino Hayashi",
-    "FuminoH",
-    buffer,
-    "fuminohayashi@gmail.com",
-    hashedPassword
-  );
-  const userTest5 = new User(
-    "Gato Aso",
-    "GatoA",
-    buffer,
-    "gatoaso@gmail.com",
-    hashedPassword
-  );
-  const userTest6 = new User(
-    "Katsu Aki",
-    "KatsuA",
-    buffer,
-    "katsuaki@gmail.com",
-    hashedPassword
-  );
-  const userTest7 = new User(
-    "Kyo Shirodaira",
-    "KyoS",
-    buffer,
-    "kyoshirodaira@gmail.com",
-    hashedPassword
-  );
-  const userTest8 = new User(
-    "Mitsuba Takanashi",
-    "MitsubaT",
-    buffer,
-    "mitsubaTakanashi@gmail.com",
-    hashedPassword
-  );
-
-  const newUsers = [
-    userTest2,
-    userTest3,
-    userTest4,
-    userTest5,
-    userTest6,
-    userTest7,
-    userTest8,
-  ];
-  try {
-    const upsertManyPosts = newUsers.map(
-      async (user) =>
-        await db.user.upsert({
-          where: { username: user.username },
-          update: {},
-          //@ts-ignore
-          create: user,
-        })
-    );
-
-    const users = await Promise.all(upsertManyPosts);
-
-    return res.json(users);
-  } catch (error) {
-    console.log(error);
-  }
-});
-
-// Ruta de coneccion author y manga.
-usersRouter.post<{ idManga: string; username: string }, {}>(
-  "/authorsTest/:username/:idManga",
-  async (req, res) => {
-    const { username, idManga } = req.params;
-
-    const getUser = await db.user.update({
-      where: {
-        username: username,
-      },
-      data: {
-        created: {
-          connect: { id: Number(idManga) },
-        },
-      },
-    });
-
-    res.json(getUser);
-  }
-);
-// Detalles del autor
-usersRouter.get<{ id: string }, {}>("/user/:id", async (req, res, next) => {
+usersRouter.get("/:id", async (req, res, next) => {
   const { id } = req.params;
   try {
     const user: any = await db.user.findUnique({
@@ -253,37 +104,24 @@ usersRouter.get<{ id: string }, {}>("/user/:id", async (req, res, next) => {
       },
     });
   } catch (err: any) {
-    console.log("Author detail: ", err);
     res.status(400).send({ error: err.message });
   }
 });
 
-usersRouter.get("/currentUser", isAuthenticated, async (req, res, next) => {
-  //@ts-ignore
+usersRouter.get("/current", isAuthenticated, async (req: any, res, next) => {
   const { id } = req.user;
   try {
     var user: any = await db.user.findUnique({
       where: { id: id },
     });
   } catch (err: any) {
-    console.log(err);
-    res.status(400).send({ error: err.message });
+    return res.status(400).send({ error: err.message });
   }
-  res.send(user)
+
+  return res.status(200).send(user)
 });
 
-usersRouter.post<
-  {},
-  {},
-  {
-    name: string;
-    username: string;
-    password: string;
-    email: string;
-    role: Role;
-  }
->("/superAdmin", async (req, res) => {
-  // const { name, username, password, email,role} = req.body;
+usersRouter.post("/super-admin", async (req, res) => {
   let image = await axios.get(
     "https://http2.mlstatic.com/D_NQ_NP_781075-MLA48271965969_112021-O.webp",
     { responseType: "arraybuffer" }
@@ -310,18 +148,17 @@ usersRouter.post<
       });
     }
   } catch (err) {
-    console.log(err);
+
   }
 });
 
-usersRouter.put<{ admin: boolean; username: string }, {}>(
-  "/user/setAdmin/:username",
+usersRouter.put(
+  "/set-admin/:username",
   isAuthenticated,
-  async (req, res, next) => {
+  async (req: any, res, next) => {
     const { username } = req.params;
-    //@ts-ignore
     const admin = req.user
-    //@ts-ignore
+
     if (!(admin.role === "SUPERADMIN")) {
       return res.status(403).send({ message: "You don't have permission to do this, Are you trying to hack us?" });
     }
@@ -340,21 +177,20 @@ usersRouter.put<{ admin: boolean; username: string }, {}>(
           role: user.role === "USER" ? "ADMIN" : "USER",
         },
       });
-      return res.send(upsertUser);
+
+      return res.status(200).send(upsertUser);
     } catch (error) {
       return res.sendStatus(404).json({ message: error });
     }
   }
 );
 
-usersRouter.put<{ admin: boolean; username: string }, {}>(
-  "/user/setActive/:username",
+usersRouter.put(
+  "/set-active/:username",
   isAuthenticated,
-  async (req, res, next) => {
+  async (req: any, res, next) => {
     const { username } = req.params;
-    //@ts-ignore
     const admin = req.user
-    //@ts-ignore
     if (!(admin.role === "ADMIN" || admin.role === "SUPERADMIN")) {
       return res.status(403).send({ message: "You don't have permission to do this, Are you trying to hack us?" });
     }
@@ -369,7 +205,6 @@ usersRouter.put<{ admin: boolean; username: string }, {}>(
       user.created.forEach((manga) => {
         manga.active = true;
       });
-      user.created.forEach((manga) => console.log(manga.active));
 
       const upsertUser = await db.user.update({
         where: {
@@ -385,39 +220,28 @@ usersRouter.put<{ admin: boolean; username: string }, {}>(
     }
   });
 
-
-//
-//
-
-usersRouter.put<{ id: string, list: string }, {}>("/user/lists", isAuthenticated, async (req, res) => {
-  // const { id } = req.params;
-  //@ts-ignore
+usersRouter.put("/lists", isAuthenticated, async (req: any, res) => {
   const id = req.user.id
   const { list } = req.query;
   const mangaId = Number(req.body.mangaId);
 
   if (list !== "library" && list !== "favorites" && list !== "wishList") return res.status(400).send({ msg: "Invalid list name" });
   try {
-    //@ts-ignore
     if (req.user[list].includes(mangaId)) {
-      //@ts-ignore
       let mangasList = await deleteToTheList(id, list, mangaId, req.user[list]);
       return (mangasList.length === 0) ?
         res.send({ msg: "Empty list" }) : res.send({ msg: "Delete manga to the list" })
     } else {
-      //@ts-ignore
       let mangasList = await addToTheList(id, list, mangaId, req.user[list]);
       return (mangasList.length === 0) ?
         res.send({ msg: "Empty list" }) : res.send({ msg: "Add manga to the list" })
     }
   } catch (error: any) {
-    console.log("Delete manga from list: ", error)
     return res.status(400).send({ error: error.message })
   }
 });
 
-usersRouter.get("/popularAuthors", async (req, res) => {
-
+usersRouter.get("/popular-authors", async (req, res) => {
   try {
     let authorsDB = await db.user.findMany({
       where: {
@@ -448,7 +272,6 @@ usersRouter.get("/popularAuthors", async (req, res) => {
 
     res.send({ data: authorsRating.slice(0, 11) })
   } catch (error: any) {
-    console.log("Popular authors: ", error)
     return res.status(400).send({ error: error.message })
   }
 });

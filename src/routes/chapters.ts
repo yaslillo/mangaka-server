@@ -221,7 +221,7 @@ chaptersRouter.get("/chapter/cover/:idChapter", async (req, res, next) => {
 // });
 
 // Votación de un capitulo
-chaptersRouter.put<{ idChapter: string }, {}>("/chapter/vote/:idChapter", isAuthenticated, async (req, res) => {
+chaptersRouter.put("/chapter/vote/:idChapter", isAuthenticated, async (req: any, res) => {
   const { idChapter } = req.params;
   let { points } = req.body;
   const user = req.user;
