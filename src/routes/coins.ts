@@ -3,19 +3,18 @@ import { db } from "../app";
 import CoinsPackage from "../classes/CoinsPackage";
 import extractionOrder from "../classes/ExtractionOrder";
 import externalOrder from "../classes/ExternalOrder";
-export const externalOrderRouter = Router();
+import { isAuthenticated } from "./auth";
 
+const router = Router();
+
+const { MERCADO_PAGO_ACCESS_TOKEN } = process.env
 const mercadopago = require("mercadopago");
 
-mercadopago.configure({
-  access_token:
-    "TEST-1688834677183173-021518-2ef84ad52b6253c0766870f65b93fc22-1074872794",
-});
+mercadopago.configure({ access_token: MERCADO_PAGO_ACCESS_TOKEN });
 
-externalOrderRouter.post<{}, {}>("/buy", (req, res) => {
-  let product = req.body;
-  console.log(req.body);
-  let preference = {
+router.post("/buy", async (req, res) => {
+  const product = req.body;
+  const preference = {
     items: [
       {
         title: product.title,
@@ -24,29 +23,24 @@ externalOrderRouter.post<{}, {}>("/buy", (req, res) => {
       },
     ],
     installments: 1,
-
     back_urls: {
       success: `${process.env.SERVER_URL}/api/coins/pagos/${product.idaux}`,
       failure: `${process.env.SERVER_URL}/api/coins/buy`,
       pending: `${process.env.SERVER_URL}/api/coins/buy`,
     },
     auto_return: "approved",
-
     external_reference: product.id,
   };
-  mercadopago.preferences
-    .create(preference)
-    .then(function (response: any) {
-      const preferenceId = response.body.id;
-      console.log(preferenceId);
-      res.send(response.body.id);
-    })
-    .catch(function (error: any) {
-      console.log(error);
-    });
+
+  try {
+    const response = await mercadopago.preferences.create(preference);
+    return res.status(200).send(response.body.id);
+    } catch (e) {
+    return res.status(500).send('internal server error');
+  }
 });
 
-externalOrderRouter.get("/pagos/:product", async (req: any, res) => {
+router.get("/payments/:product", async (req: any, res) => {
   const payment_status = req.query.status;
   let { product } = req.params;
   let user2 = req.user;
@@ -95,7 +89,7 @@ externalOrderRouter.get("/pagos/:product", async (req: any, res) => {
   }
 });
 
-externalOrderRouter.post<{}, {}>("/sell", async (req: any, res) => {
+router.post("/sell", async (req: any, res) => {
   let { name, cbu, value } = req.body;
   let user2 = req.user;
   let nValue = Number(value);
@@ -138,64 +132,55 @@ externalOrderRouter.post<{}, {}>("/sell", async (req: any, res) => {
     }
   }
 });
-externalOrderRouter.get<{}, {}>("/pack", async (req, res) => {
-  let pack = await db.coinsPackage.findMany();
-  let packfiltered = pack.filter((e) => e.buyprice > 9);
-  res.send(packfiltered);
+
+router.get("/packages", async (req, res) => {
+  try {
+    const pack = await db.coinsPackage.findMany();
+    const filteredPack = pack.filter((e) => e.buyprice > 9);
+    return res.status(200).send(filteredPack);
+  } catch (e) {
+    return res.status(500).send('internal server error');
+  }
 });
 
-externalOrderRouter.get<{}, {}>("/createPackage", async (req, res) => {
-  let cP = new CoinsPackage(
-    600,
-    "500 Monedas + 100 Monedas de regalo",
-    0,
-    5000
-  );
-  let cP2 = new CoinsPackage(
-    300,
-    "250 Monedas + 50 Monedas de regalo",
-    0,
-    2500
-  );
-  let cP3 = new CoinsPackage(
-    130,
-    "100 Monedas + 30 Monedas de regalo",
-    0,
-    1000
-  );
-  let cP4 = new CoinsPackage(60, "50 Monedas + 10 Monedas de regalo", 0, 500);
-  let cP5 = new CoinsPackage(10, "10 Monedas", 0, 10);
-  let cP6 = new CoinsPackage(1, "Orden de extraccion", 7, 0);
-  const newPackage = await db.coinsPackage.create({ data: cP });
-  const newPackage2 = await db.coinsPackage.create({ data: cP2 });
-  const newPackage3 = await db.coinsPackage.create({ data: cP3 });
-  const newPackage4 = await db.coinsPackage.create({ data: cP4 });
-  const newPackage5 = await db.coinsPackage.create({ data: cP5 });
-  const newPackage6 = await db.coinsPackage.create({ data: cP6 });
-  res.send("Combos de monedas creados");
+router.post("/packages", async (req, res) => {
+  const coinPackages = [
+    new CoinsPackage(600, "500 Monedas + 100 Monedas de regalo", 0 ,5000),
+    new CoinsPackage(300, "250 Monedas + 50 Monedas de regalo", 0, 2500),
+    new CoinsPackage(130, "100 Monedas + 30 Monedas de regalo", 0, 1000),
+    new CoinsPackage(60, "50 Monedas + 10 Monedas de regalo", 0, 500),
+    new CoinsPackage(10, "10 Monedas", 0, 10),
+    new CoinsPackage(1, "Orden de extraccion", 7, 0),
+  ];
+
+  const coinPackagesToCreate = coinPackages.map((cp) => db.coinsPackage.create({ data: cp }));
+
+  try {
+    await Promise.all(coinPackagesToCreate)
+    return res.status(201).send("combos de monedas creados");
+  } catch (e) {
+    return res.status(500).send('internal server error');
+  }
 });
 
-externalOrderRouter.post<{}, {}>("/generatePackages", async (req, res) => {
-  let { id, value, title, buyprice, sellprice } = req.body;
-  let cP = new CoinsPackage(value, title, sellprice, buyprice, id);
-  const newPackage = await db.coinsPackage.create({ data: cP });
-  res.send("Bundle Coins Created");
+router.get("/buy-orders", async (req: any, res) => {
+  try {
+    const user = req.user;
+    const externalOrders = await db.externalOrder.findMany({ where: { userId: user.id } });
+    return res.status(200).send(externalOrders);
+  } catch (error) {
+    return res.status(500).send('internal server error');
+  }
 });
 
-externalOrderRouter.get<{}, {}>("/pack", async (req, res) => {
-  let pack = await db.coinsPackage.findMany();
-  let packfiltered = pack.filter((e) => e.buyprice > 9);
-  res.send(packfiltered);
+router.get("/sell-orders", isAuthenticated, async (req: any, res) => {
+  try {
+    const user = req.user;
+    const extractionOrders = await db.extractionOrder.findMany({ where: { userId: user.id } });
+    return res.status(200).send(extractionOrders);
+  } catch (error) {
+    return res.status(500).send('internal server error');
+  }
 });
 
-externalOrderRouter.get<{}, {}>("/getBuyOrders", async (req: any, res) => {
-  let user2 = req.user;
-  let info = await db.externalOrder.findMany({ where: { userId: user2.id } });
-  res.send(info);
-});
-
-externalOrderRouter.get<{}, {}>("/getSellOrders", async (req: any, res) => {
-  let user2 = req.user;
-  let info = await db.extractionOrder.findMany({ where: { userId: user2.id } });
-  res.send(info);
-});
+export default router;

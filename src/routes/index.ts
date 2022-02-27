@@ -4,7 +4,7 @@ import { mangasRouter } from "./mangas";
 import chaptersRouter from "./chapters";
 import authRouter  from "./auth";
 import { internalOrderRouter } from "./chapterBuy";
-import { externalOrderRouter } from "./coins";
+import externalOrderRouter from "./coins";
 import { profileRouter } from "./profile";
 import { commentsRouter } from "./comments";
 
