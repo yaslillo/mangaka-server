@@ -78,6 +78,42 @@ router.get("/current", isAuthenticated, async (req: any, res, next) => {
   return res.status(200).send(user)
 });
 
+router.get("/popular-authors", async (req, res) => {
+  try {
+    let authorsDB = await db.user.findMany({
+      where: {
+        creatorMode: true,
+      },
+      select: {
+        id: true, name: true, avatar: true, created: {
+          select: {
+            rating: true,
+          }
+        }
+      },
+    });
+
+    const authorsRating: any = authorsDB.map((author) => {
+      return {
+        id: author.id,
+        avatar: author.avatar,
+        name: author.name,
+        // rating: Number(((author.created.map(elto => elto.rating).reduce((acum, actu) => acum += actu)) / author.created.length).toFixed(2))
+        rating: 10
+      }
+    });
+
+    authorsRating.sort((a: any, b: any) => {
+      if (a.rating > b.rating) return -1;
+      if (a.rating < b.rating) return 1;
+    })
+
+    res.send({ data: authorsRating.slice(0, 11) })
+  } catch (error: any) {
+    return res.status(400).send({ error: error.message })
+  }
+});
+
 router.get("/:id", async (req, res, next) => {
   const { id } = req.params;
   try {
@@ -245,39 +281,6 @@ router.put("/lists", isAuthenticated, async (req: any, res) => {
   }
 });
 
-router.get("/popular-authors", async (req, res) => {
-  try {
-    let authorsDB = await db.user.findMany({
-      where: {
-        creatorMode: true,
-      },
-      select: {
-        id: true, name: true, avatar: true, created: {
-          select: {
-            rating: true,
-          }
-        }
-      },
-    });
 
-    const authorsRating: any = authorsDB.map((author) => {
-      return {
-        id: author.id,
-        avatar: author.avatar,
-        name: author.name,
-        rating: Number(((author.created.map(elto => elto.rating).reduce((acum, actu) => acum += actu)) / author.created.length).toFixed(2))
-      }
-    });
-
-    authorsRating.sort((a: any, b: any) => {
-      if (a.rating > b.rating) return -1;
-      if (a.rating < b.rating) return 1;
-    })
-
-    res.send({ data: authorsRating.slice(0, 11) })
-  } catch (error: any) {
-    return res.status(400).send({ error: error.message })
-  }
-});
 
 export default router;

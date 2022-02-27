@@ -164,7 +164,7 @@ router.post("/packages", async (req, res) => {
   }
 });
 
-router.get("/buy-orders", async (req: any, res) => {
+router.get("/buy-orders", isAuthenticated, async (req: any, res) => {
   try {
     const user = req.user;
     const externalOrders = await db.externalOrder.findMany({ where: { userId: user.id } });
