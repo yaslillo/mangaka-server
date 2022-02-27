@@ -1,14 +1,44 @@
+import jwt from 'jsonwebtoken';
+import bcrypt from 'bcrypt';
 import { Router } from "express";
 import { db } from "../app";
 
-export const authRouter = Router();
+const { JWT_TOKEN_SECRET } = process.env;
+const router = Router();
+
 export async function isAuthenticated(req: any , res: any, next: any) {
-  if (req.isAuthenticated()) {
-    return next();
-  }
-  res.sendStatus(401);
+  const token = req.token;
+
+  if (!token) return res.sendStatus(401)
+
+  jwt.verify(token, JWT_TOKEN_SECRET as string, async (err: any, decoded: any) => {
+    const user = await db.user.findUnique({where: { id: decoded.id }});
+    if (err) return res.sendStatus(403);
+    req.user = user
+    next();
+  })
 };
 
-authRouter.post<{}, {}>("/token", (req, res, next) => {
-  return res.status(200).send({})
+router.post("/token", async (req, res, next) => {
+  const { username, password } = req.body;
+
+  if (!username) return res.status(400).send({error: 'missing body.username'});
+  if (!password) return res.status(400).send({error: 'missing body.password'});
+
+  const user = await db.user.findUnique({where: { username }});
+
+  if (!user) {
+    return res.status(404).send();
+  }
+
+  const isCorrectPassword = await bcrypt.compare(password, user.password || '');
+
+  if (!isCorrectPassword) {
+    return res.status(401).send();
+  }
+
+  const token = jwt.sign({id: user.id}, `${JWT_TOKEN_SECRET}`, { expiresIn: '1800s' });
+  return res.status(200).send({token})
 });
+
+export default router;

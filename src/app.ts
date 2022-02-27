@@ -4,6 +4,7 @@ import morgan from "morgan";
 import { PrismaClient } from "@prisma/client";
 import { routes } from "./routes/index";
 import cors from "cors";
+import bearerToken from 'express-bearer-token';
 
 const { PORT } = process.env;
 export const db = new PrismaClient();
@@ -17,6 +18,7 @@ app.use(cors({
 }));
 
 app.use(morgan("dev"));
+app.use(bearerToken())
 app.use("/api", routes);
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {
   // eslint-disable-line no-unused-vars
