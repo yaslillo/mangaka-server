@@ -20,12 +20,12 @@ export async function isAuthenticated(req: any , res: any, next: any) {
 };
 
 router.post("/token", async (req, res, next) => {
-  const { username, password } = req.body;
+  const { email, password } = req.body;
 
-  if (!username) return res.status(400).send({error: 'missing body.username'});
+  if (!email) return res.status(400).send({error: 'missing body.email'});
   if (!password) return res.status(400).send({error: 'missing body.password'});
 
-  const user = await db.user.findUnique({where: { username }});
+  const user = await db.user.findUnique({where: { email }});
 
   if (!user) {
     return res.status(404).send();
