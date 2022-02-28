@@ -12,8 +12,15 @@ export const db = new PrismaClient();
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
 app.use(cors({
-  origin: ["https://mangaka-client.herokuapp.com", "http://localhost:3000"],
+  origin: function (origin, callback) {
+    if (["https://mangaka-client.herokuapp.com", "http://localhost:3000"].indexOf(origin || '') !== -1) {
+      callback(null, true)
+    } else {
+      callback(new Error('Not allowed by CORS'))
+    }
+  },
   credentials: true
 }));
 
