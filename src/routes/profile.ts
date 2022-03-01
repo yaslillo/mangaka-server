@@ -39,10 +39,7 @@ profileRouter.get("/", isAuthenticated, async (req, res, next) => {
       library: library,
       wishlist: wishList,
       favorites: favorites,
-      rating:
-        created.reduce((acc: any, curr: any) => {
-          return acc + curr.rating;
-        }, 0) / created.length,
+      rating: 10
     };
     res.json({ profile: profile, mangasCreated: created });
   } else {
