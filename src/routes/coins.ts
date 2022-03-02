@@ -8,7 +8,9 @@ const mercadopago = require("mercadopago");
 const router = Router();
 const {
   MERCADO_PAGO_ACCESS_TOKEN,
-  SERVER_URL
+  SERVER_URL,
+  SERVER_URL_PROD,
+  REACT_FRONT,
 } = process.env
 
 mercadopago.configure({ access_token: MERCADO_PAGO_ACCESS_TOKEN });
@@ -81,10 +83,10 @@ router.get("/payments/:product", async (req: any, res) => {
         });
         //@ts-ignore
 
-        res.redirect(`${SERVER_URL}`);
+        res.redirect(`${REACT_FRONT}`);
       } catch (error) {
         console.log(error);
-        res.redirect(`${SERVER_URL}/error`);
+        res.redirect(`${REACT_FRONT}/error`);
       }
     }
   }
